@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+# 2022.02.23 - Matteo Chesi
+#
+function help() {
+  SCRIPTNAME=`basename $0`
+
+cat << EOF
+
+    This script makes a RockyLinux system appear as a CentOS one.
+
+    Usage: ${SCRIPTNAME} <OPTIONS>
+
+    Options:
+ 
+    --revert|-r : revert changes
+
+    --help|-h   : print help message
+
+EOF
+}
+
+function rocky2centos() {
+  . /etc/os-release
+  if [ "$ID" != "rocky" ]
+  then
+    echo "Linux distro isn't Rocky... skipping"
+    exit 0
+  fi
+
+  cat /etc/rocky-release | sed 's/Rocky/CentOS/' > /etc/centos-release
+  rm -f /etc/redhat-release
+  ln -s centos-release /etc/redhat-release  
+  rm -f /etc/system-release
+  ln -s centos-release /etc/system-release  
+  cp -a /usr/lib/os-release /usr/lib/os-release.rocky
+  cat /usr/lib/os-release | \
+    sed -e 's/^NAME=\"Rocky Linux\"/NAME=\"Centos Linux\"/' \
+        -e 's/^ID=\"rocky\"/ID=\"centos\"/' \
+       	-e 's/^PRETTY_NAME=\"Rocky Linux/PRETTY_NAME=\"Centos Linux/' \
+    > /usr/lib/os-release.centos
+  rm -f /etc/os-release
+  ln -s ../usr/lib/os-release.centos /etc/os-release
+}
+
+function centos2rocky() {
+  . /etc/os-release
+  if [ "$ID" != "centos" ]
+  then
+    echo "Linux distro isn't CentOS... skipping"
+    exit 0
+  fi
+
+  rm -f /etc/redhat-release
+  ln -s rocky-release /etc/redhat-release  
+  rm -f /etc/system-release
+  ln -s rocky-release /etc/system-release  
+  rm -f /etc/os-release
+  ln -s ../usr/lib/os-release /etc/os-release
+}
+
+function parse_args() {
+  case $1 in
+    '')
+      rocky2centos
+      ;;
+    --revert|-r)
+      centos2rocky
+      ;;
+    --help|-h)
+      help
+      ;;
+    *)
+      echo "Error. Unrecognized command: $1"
+      help
+      exit 1
+      ;;		
+  esac	
+}
+
+parse_args $@
+exit 0
