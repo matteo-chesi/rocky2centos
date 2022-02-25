@@ -28,19 +28,28 @@ function rocky2centos() {
     exit 0
   fi
 
-  cat /etc/rocky-release | sed 's/Rocky/CentOS/' > /etc/centos-release
+  echo 'CentOS Linux release 8.4.2105' > /etc/centos-release
   rm -f /etc/redhat-release
   ln -s centos-release /etc/redhat-release  
   rm -f /etc/system-release
   ln -s centos-release /etc/system-release  
+cat << EOF >/usr/lib/os-release.centos
+NAME="CentOS Linux"
+VERSION="8"
+ID="centos"
+ID_LIKE="rhel fedora"
+VERSION_ID="8"
+PLATFORM_ID="platform:el8"
+PRETTY_NAME="CentOS Linux 8"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:centos:centos:8"
+HOME_URL="https://centos.org/"
+BUG_REPORT_URL="https://bugs.centos.org/"
+CENTOS_MANTISBT_PROJECT="CentOS-8"
+CENTOS_MANTISBT_PROJECT_VERSION="8"
+EOF
   cp -a /usr/lib/os-release /usr/lib/os-release.rocky
-  cat /usr/lib/os-release | \
-    sed -e 's/^NAME=\"Rocky Linux\"/NAME=\"Centos Linux\"/' \
-        -e 's/^ID=\"rocky\"/ID=\"centos\"/' \
-       	-e 's/^PRETTY_NAME=\"Rocky Linux/PRETTY_NAME=\"Centos Linux/' \
-    > /usr/lib/os-release.centos
-  rm -f /etc/os-release
-  ln -s ../usr/lib/os-release.centos /etc/os-release
+  cp -a /usr/lib/os-release.centos /usr/lib/os-release
 }
 
 function centos2rocky() {
@@ -55,8 +64,7 @@ function centos2rocky() {
   ln -s rocky-release /etc/redhat-release  
   rm -f /etc/system-release
   ln -s rocky-release /etc/system-release  
-  rm -f /etc/os-release
-  ln -s ../usr/lib/os-release /etc/os-release
+  cp -a /usr/lib/os-release.rocky /usr/lib/os-release
 }
 
 function parse_args() {
